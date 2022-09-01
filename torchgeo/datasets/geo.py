@@ -96,7 +96,7 @@ class GeoDataset(Dataset[Dict[str, Any]], abc.ABC):
     __add__ = None  # type: ignore[assignment]
 
     def __init__(
-        self, transforms: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None
+        self, transforms: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None, **kwargs: Any
     ) -> None:
         """Initialize a new Dataset instance.
 
@@ -104,6 +104,13 @@ class GeoDataset(Dataset[Dict[str, Any]], abc.ABC):
             transforms: a function/transform that takes an input sample
                 and returns a transformed version
         """
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise AttributeError(f"Unknown initialization argument: '{key}'" + 
+                    f" is not an attribute for {self.__class__.__name__}")
+
         self.transforms = transforms
 
         # Create an R-tree to index the dataset
@@ -312,6 +319,7 @@ class RasterDataset(GeoDataset):
         res: Optional[float] = None,
         transforms: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
         cache: bool = True,
+        **kwargs: Any,
     ) -> None:
         """Initialize a new Dataset instance.
 
@@ -328,7 +336,7 @@ class RasterDataset(GeoDataset):
         Raises:
             FileNotFoundError: if no files are found in ``root``
         """
-        super().__init__(transforms)
+        super().__init__(transforms, **kwargs)
 
         self.root = root
         self.cache = cache
@@ -515,6 +523,7 @@ class VectorDataset(GeoDataset):
         crs: Optional[CRS] = None,
         res: float = 0.0001,
         transforms: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
+        **kwargs: Any,
     ) -> None:
         """Initialize a new Dataset instance.
 
@@ -529,7 +538,7 @@ class VectorDataset(GeoDataset):
         Raises:
             FileNotFoundError: if no files are found in ``root``
         """
-        super().__init__(transforms)
+        super().__init__(transforms, **kwargs)
 
         self.root = root
         self.res = res
